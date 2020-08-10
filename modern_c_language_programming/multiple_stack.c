@@ -56,7 +56,7 @@ static bool is_stack_range_ok( const Stack_Range_Check* check, int val )
 
 	if ( is_null(check) )
 	{
-		return_value = false;
+		return_value = true;
 	}
 	else
 	{
