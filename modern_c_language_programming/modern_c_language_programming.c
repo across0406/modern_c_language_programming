@@ -6,12 +6,42 @@
 #include <stdbool.h>
 
 //
+//	int stack_push_test( void )
+//	- Description : push test
+//	- return values:
+//		|- 0 => success
+//		|- 1 => push error
+//
+int stack_push_test( void )
+{
+	int test_result = 0;
+
+	for (int i = 0; i < 11; ++i)
+	{
+		STACK_OPERATION_CHECK push_check_result = stack_push(stack_obj, i);
+
+		if ( i == 10 && push_check_result != SUCCESS )
+		{
+			test_result = 0;
+		}
+		else if ( i < 10 && push_check_result != SUCCESS )
+		{
+			test_result = 1;
+			break;
+		}
+	}
+
+	return test_result;
+}
+
+//
 //	int stack_new_free_test( void )
 //	- Description : new and free test
 //	- return values:
 //		|- 0 => success
 //		|- 1 => fail for new
 //		|- 2 => fail for free
+//		|- 3 => fail for push test
 //
 int stack_new_free_test( void )
 {
@@ -24,6 +54,16 @@ int stack_new_free_test( void )
 	else
 	{
 		return test_result = 1;
+	}
+
+	// push test call
+	if ( !stack_push_test() )
+	{
+		test_result = 0;
+	}
+	else
+	{
+		return test_result = 3;
 	}
 
 	if ( stack_free( stack_obj, &stack_obj ) )
