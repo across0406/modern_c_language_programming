@@ -66,9 +66,9 @@ static bool is_stack_range_ok( const Stack_Range_Check* check, int val )
 	return return_value;
 }
 
-STACK_OPERATION_CHECK stack_push( Stack* stack, int val)
+STACK_OPERATION_STATUS stack_push( Stack* stack, int val)
 {
-	STACK_OPERATION_CHECK return_value = 0;
+	STACK_OPERATION_STATUS return_value = 0;
 
 	if ( is_null( stack ) )
 	{
@@ -95,9 +95,9 @@ STACK_OPERATION_CHECK stack_push( Stack* stack, int val)
 	return return_value;
 }
 
-STACK_OPERATION_CHECK stack_pop( Stack* stack, int* ret )
+STACK_OPERATION_STATUS stack_pop( Stack* stack, int* ret )
 {
-	STACK_OPERATION_CHECK return_value = 0;
+	STACK_OPERATION_STATUS return_value = 0;
 
 	if ( is_null( stack ) )
 	{
@@ -107,7 +107,7 @@ STACK_OPERATION_CHECK stack_pop( Stack* stack, int* ret )
 	{
 		return_value = NULL_BUFFER;
 	}
-	else if ( is_stack_full( stack ) )
+	else if ( is_stack_empty( stack ) )
 	{
 		return_value = FULL_OR_EMPTY_BUFFER;
 	}
@@ -120,7 +120,7 @@ STACK_OPERATION_CHECK stack_pop( Stack* stack, int* ret )
 	return return_value;
 }
 
-bool stack_only_buffer_new( Stack* stack, int num )
+bool stack_only_buffer_new( Stack* stack, size_t buffer_size )
 {
 	bool return_value = false;
 
@@ -133,8 +133,9 @@ bool stack_only_buffer_new( Stack* stack, int num )
 		stack_free( stack, &stack );
 	}
 
-	int* temp_buffer = (int*)malloc(sizeof(int) * num);
+	int* temp_buffer = (int*)malloc(sizeof(int) * buffer_size);
 	stack->buffer = temp_buffer;
+	stack->size = buffer_size;
 	return_value = true;
 
 	return return_value;
@@ -152,6 +153,7 @@ bool stack_only_buffer_free( Stack* stack )
 	{
 		free(stack->buffer);
 		stack->buffer = NULL;
+		stack->size = 0;
 		return_value = true;
 	}
 
@@ -197,7 +199,7 @@ bool stack_only_check_free( Stack* stack )
 	return return_value;
 }
 
-bool stack_new( Stack* stack, int num, Stack** out_stack_addr )
+bool stack_new( Stack* stack, size_t buffer_size, Stack** out_stack_addr )
 {
 	bool return_value = false;
 
@@ -207,11 +209,11 @@ bool stack_new( Stack* stack, int num, Stack** out_stack_addr )
 		stack->buffer = NULL;
 		stack->check = NULL;
 		stack->top = 0;
-		stack->size = num;
+		stack->size = 0;
 		*out_stack_addr = stack;
 	}
 
-	return_value = stack_only_buffer_new( stack, num );
+	return_value = stack_only_buffer_new( stack, buffer_size );
 
 	return return_value;
 }
@@ -259,6 +261,69 @@ bool stack_free( Stack* stack, Stack** out_stack_addr )
 	*out_stack_addr = NULL;
 	free( stack );
 	return_value = true;
+
+	return return_value;
+}
+
+STACK_OPERATION_STATUS stack_get_size( Stack* stack, size_t* size )
+{
+	STACK_OPERATION_STATUS return_value = SUCCESS;
+
+	if (is_null(stack))
+	{
+		return_value = NULL_OBJECT;
+	}
+	else if (is_stack_null(stack))
+	{
+		return_value = NULL_BUFFER;
+	}
+	else if ( size == NULL )
+	{
+		return_value = PASSING_ITEM_IS_NULL;
+	}
+	else
+	{
+		*size = stack->size;
+		return_value = SUCCESS;
+	}
+
+	return return_value;
+}
+
+STACK_OPERATION_STATUS stack_set_size( Stack* stack, size_t size )
+{
+	STACK_OPERATION_STATUS return_value = SUCCESS;
+
+	if (is_null(stack))
+	{
+		return_value = NULL_OBJECT;
+	}
+	else if (is_stack_null(stack))
+	{
+		return_value = NULL_BUFFER;
+	}
+	else
+	{
+		bool buffer_operation_result = stack_only_buffer_free( stack );
+		
+		if ( !buffer_operation_result )
+		{
+			return_value = NULL_OBJECT;
+		}
+		else
+		{
+			buffer_operation_result = stack_only_buffer_new( stack, size );
+
+			if ( !buffer_operation_result )
+			{
+				return_value = FAIL_FREE_BUFFER;
+			}
+			else
+			{
+				return_value = SUCCESS;
+			}
+		}
+	}
 
 	return return_value;
 }
